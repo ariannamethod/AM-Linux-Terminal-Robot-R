@@ -158,14 +158,17 @@ def test_companion_commands(monkeypatch):
     assert "/dive" in commands
     assert "/deepdive" in commands
     assert "/diveoff" in commands
+    assert "/deepdiveoff" in commands
     monkeypatch.setattr(letsgo.memory, "last_user_command", lambda: "ls")
     monkeypatch.setattr(letsgo.JOHNY, "query", lambda msg: "ok")
     monkeypatch.setattr(letsgo.TONY, "query", lambda msg: "deep")
     asyncio.run(handlers["/dive"]("/dive"))
     assert letsgo.COMPANION_ACTIVE == "johny"
+    asyncio.run(handlers["/diveoff"]("/diveoff"))
+    assert letsgo.COMPANION_ACTIVE is None
     asyncio.run(handlers["/deepdive"]("/deepdive"))
     assert letsgo.COMPANION_ACTIVE == "tony"
-    asyncio.run(handlers["/diveoff"]("/diveoff"))
+    asyncio.run(handlers["/deepdiveoff"]("/deepdiveoff"))
     assert letsgo.COMPANION_ACTIVE is None
 
 

@@ -381,6 +381,14 @@ async def handle_diveoff(_: str) -> Tuple[str, str | None]:
     return reply, reply
 
 
+async def handle_deepdiveoff(_: str) -> Tuple[str, str | None]:
+    global COMPANION_ACTIVE
+    if COMPANION_ACTIVE == "tony":
+        COMPANION_ACTIVE = None
+    reply = "Companion off."
+    return reply, reply
+
+
 async def handle_status(_: str) -> Tuple[str, str | None]:
     reply = status()
     return reply, color(reply, SETTINGS.green)
@@ -479,7 +487,7 @@ async def handle_help(user: str) -> Tuple[str, str | None]:
         reply = f"No help available for {cmd}"
         return reply, reply
     lines: list[str] = []
-    companion_cmds = ["/dive", "/diveoff", "/deepdive"]
+    companion_cmds = ["/dive", "/diveoff", "/deepdive", "/deepdiveoff"]
     for cmd in companion_cmds:
         if cmd in COMMAND_MAP:
             _, desc = COMMAND_MAP[cmd]
@@ -521,6 +529,7 @@ CORE_COMMANDS: Dict[str, Tuple[Handler, str]] = {
     "/dive": (handle_dive, "ask companion"),
     "/diveoff": (handle_diveoff, "companion off"),
     "/deepdive": (handle_deepdive, "deep xplainer companion"),
+    "/deepdiveoff": (handle_deepdiveoff, "companion off"),
     "/status": (handle_status, "show system metrics"),
     "/cpu": (handle_cpu, "show CPU load"),
     "/disk": (handle_disk, "disk usage"),
@@ -540,6 +549,7 @@ COMMAND_HELP: Dict[str, str] = {
     "/dive": "Usage: /dive\nAsk companion about the last command.",
     "/diveoff": "Usage: /diveoff\nCompanion off.",
     "/deepdive": "Usage: /deepdive\nDeep xplainer companion about the last command.",
+    "/deepdiveoff": "Usage: /deepdiveoff\nCompanion off.",
     "/status": "Usage: /status\nShow basic system metrics.",
     "/cpu": "Usage: /cpu\nShow CPU load averages.",
     "/disk": "Usage: /disk\nShow disk usage information.",
@@ -579,7 +589,7 @@ async def main() -> None:
     except FileNotFoundError:
         pass
 
-    companion_cmds = ["/dive", "/diveoff", "/deepdive"]
+    companion_cmds = ["/dive", "/diveoff", "/deepdive", "/deepdiveoff"]
     other_cmds = sorted(cmd for cmd in COMMAND_HANDLERS if cmd not in companion_cmds)
     command_summary = " ".join(companion_cmds + other_cmds)
 
