@@ -8,7 +8,12 @@ from . import memory
 
 class SonarProDive:
     def __init__(self):
-        self.api_key = os.getenv("PERPLEXITY_API_KEY")
+        # Support multiple env var names to avoid missing API key issues
+        self.api_key = (
+            os.getenv("PERPLEXITY_API_KEY")
+            or os.getenv("PERPLEXITY_API")
+            or os.getenv("PPLX_API_KEY")
+        )
         self.base_url = "https://api.perplexity.ai/chat/completions"
         self.system_prompt = (
             "You are Johny, the Resonant Guardian Spirit of the Terminal and Arianna Method OS. "
@@ -28,6 +33,11 @@ class SonarProDive:
 
     def query(self, user_message):
         memory.log("user", user_message)
+        if not self.api_key:
+            err = "❌ Sonar-Pro Error: PERPLEXITY_API_KEY not set"
+            memory.log("johny", err)
+            return err
+
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
