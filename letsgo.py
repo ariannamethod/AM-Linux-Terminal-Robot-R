@@ -25,6 +25,9 @@ from typing import (
 from dataclasses import dataclass, asdict
 import re
 import shutil
+from spirits.johny import SonarProDive
+from spirits.tony import SonarReasoningDive
+from spirits import memory
 
 _NO_COLOR_FLAG = "--no-color"
 USE_COLOR = (
@@ -120,6 +123,10 @@ PY_TIMEOUT = 5
 ERROR_LOG_PATH = LOG_DIR / "errors.log"
 
 Handler = Callable[[str], Awaitable[Tuple[str, str | None]]]
+
+JOHNY = SonarProDive()
+TONY = SonarReasoningDive()
+COMPANION_ACTIVE: str | None = None
 
 
 def _ensure_log_dir() -> None:
@@ -349,6 +356,31 @@ def search_history(pattern: str) -> str:
     return "\n".join(matches) if matches else "no matches"
 
 
+async def handle_dive(_: str) -> Tuple[str, str | None]:
+    global COMPANION_ACTIVE
+    COMPANION_ACTIVE = "johny"
+    last = memory.last_user_command()
+    prompt = f"The user tried to '{last}' and had problems. Explain."
+    reply = await asyncio.to_thread(JOHNY.query, prompt)
+    return reply, reply
+
+
+async def handle_deepdive(_: str) -> Tuple[str, str | None]:
+    global COMPANION_ACTIVE
+    COMPANION_ACTIVE = "tony"
+    last = memory.last_user_command()
+    prompt = f"The user tried to '{last}' and needs a deep explanation."
+    reply = await asyncio.to_thread(TONY.query, prompt)
+    return reply, reply
+
+
+async def handle_diveoff(_: str) -> Tuple[str, str | None]:
+    global COMPANION_ACTIVE
+    COMPANION_ACTIVE = None
+    reply = "Companion off."
+    return reply, reply
+
+
 async def handle_status(_: str) -> Tuple[str, str | None]:
     reply = status()
     return reply, color(reply, SETTINGS.green)
@@ -424,7 +456,8 @@ async def handle_py(user: str) -> Tuple[str, str | None]:
 
 async def handle_clear(_: str) -> Tuple[str, str | None]:
     os.system("clear")
-    return "", None
+    reply = "Cleared."
+    return reply, reply
 
 
 async def handle_history(user: str) -> Tuple[str, str | None]:
@@ -446,8 +479,14 @@ async def handle_help(user: str) -> Tuple[str, str | None]:
         reply = f"No help available for {cmd}"
         return reply, reply
     lines: list[str] = []
+    companion_cmds = ["/dive", "/diveoff", "/deepdive"]
+    for cmd in companion_cmds:
+        if cmd in COMMAND_MAP:
+            _, desc = COMMAND_MAP[cmd]
+            lines.append(f"{cmd} - {desc}")
     for cmd, (_, desc) in sorted(COMMAND_MAP.items()):
-        lines.append(f"{cmd} - {desc}")
+        if cmd not in companion_cmds:
+            lines.append(f"{cmd} - {desc}")
     reply = "\n".join(lines)
     return reply, reply
 
@@ -478,38 +517,29 @@ async def handle_ping(_: str) -> Tuple[str, str | None]:
     return reply, reply
 
 
-async def handle_color(user: str) -> Tuple[str, str | None]:
-    parts = user.split()
-    if len(parts) != 2 or parts[1] not in {"on", "off"}:
-        reply = "Usage: /color on|off"
-        return reply, reply
-    global USE_COLOR
-    USE_COLOR = parts[1] == "on"
-    SETTINGS.use_color = USE_COLOR
-    _save_settings()
-    state = "enabled" if USE_COLOR else "disabled"
-    reply = f"color {state}"
-    return reply, color(reply, SETTINGS.green)
-
-
 CORE_COMMANDS: Dict[str, Tuple[Handler, str]] = {
-    "/status": (handle_status, "show basic system metrics"),
+    "/dive": (handle_dive, "ask companion"),
+    "/diveoff": (handle_diveoff, "companion off"),
+    "/deepdive": (handle_deepdive, "deep xplainer companion"),
+    "/status": (handle_status, "show system metrics"),
     "/cpu": (handle_cpu, "show CPU load"),
-    "/disk": (handle_disk, "show disk usage"),
-    "/net": (handle_net, "show network parameters"),
-    "/time": (handle_time, "show current UTC time"),
-    "/run": (handle_run, "run a shell command"),
+    "/disk": (handle_disk, "disk usage"),
+    "/net": (handle_net, "network parameters"),
+    "/time": (handle_time, "curent UTC time"),
+    "/run": (handle_run, "shell command"),
     "/py": (handle_py, "execute Python code"),
-    "/summarize": (handle_summarize, "summarize log entries"),
-    "/clear": (handle_clear, "clear the terminal screen"),
-    "/history": (handle_history, "show command history"),
-    "/help": (handle_help, "show this help message"),
-    "/search": (handle_search, "search command history"),
+    "/summarize": (handle_summarize, "log entries"),
+    "/clear": (handle_clear, "clear the terminal"),
+    "/history": (handle_history, "command history"),
+    "/help": (handle_help, "help message"),
+    "/search": (handle_search, "command history"),
     "/ping": (handle_ping, "reply with pong"),
-    "/color": (handle_color, "toggle colored output"),
 }
 
 COMMAND_HELP: Dict[str, str] = {
+    "/dive": "Usage: /dive\nAsk companion about the last command.",
+    "/diveoff": "Usage: /diveoff\nCompanion off.",
+    "/deepdive": "Usage: /deepdive\nDeep xplainer companion about the last command.",
     "/status": "Usage: /status\nShow basic system metrics.",
     "/cpu": "Usage: /cpu\nShow CPU load averages.",
     "/disk": "Usage: /disk\nShow disk usage information.",
@@ -521,12 +551,11 @@ COMMAND_HELP: Dict[str, str] = {
         "Usage: /summarize [--history] [limit]"
         "\nSummarize recent log entries or command history."
     ),
-    "/clear": "Usage: /clear\nClear the terminal screen.",
+    "/clear": "Usage: /clear\nClear the terminal.",
     "/history": "Usage: /history [n]\nShow the last n commands.",
     "/help": "Usage: /help [command]\nList commands or show detailed help.",
     "/search": "Usage: /search <pattern>\nSearch the command history.",
     "/ping": "Usage: /ping\nReply with pong.",
-    "/color": "Usage: /color on|off\nEnable or disable colored output.",
 }
 
 COMMAND_HANDLERS: Dict[str, Handler] = {
@@ -550,7 +579,9 @@ async def main() -> None:
     except FileNotFoundError:
         pass
 
-    command_summary = " ".join(sorted(COMMAND_HANDLERS))
+    companion_cmds = ["/dive", "/diveoff", "/deepdive"]
+    other_cmds = sorted(cmd for cmd in COMMAND_HANDLERS if cmd not in companion_cmds)
+    command_summary = " ".join(companion_cmds + other_cmds)
 
     readline.parse_and_bind("tab: complete")
     readline.parse_and_bind(r'"\e[A": history-search-backward')
@@ -593,7 +624,17 @@ async def main() -> None:
             break
         if user.strip().lower() in {"exit", "quit"}:
             break
+        memory.log("user", user)
         log(f"user:{user}")
+        if not user.startswith("/") and COMPANION_ACTIVE:
+            if COMPANION_ACTIVE == "johny":
+                reply = await asyncio.to_thread(JOHNY.query, user)
+            else:
+                reply = await asyncio.to_thread(TONY.query, user)
+            print(reply)
+            memory.log("reply", reply)
+            log(f"{COMPANION_ACTIVE}:{reply}")
+            continue
         base = user.split()[0]
         handler = COMMAND_HANDLERS.get(base)
         if handler:
@@ -603,6 +644,7 @@ async def main() -> None:
             colored = color(reply, SETTINGS.red)
         if colored is not None:
             print(colored)
+        memory.log("reply", reply)
         log(f"letsgo:{reply}")
     log("session_end")
 
