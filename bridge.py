@@ -286,6 +286,10 @@ async def handle_telegram(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if not output:
         return
     base = cmd.split()[0]
+    if base in {"/dive", "/deepdive"}:
+        context.user_data["companion_active"] = True
+    elif base in {"/diveoff", "/deepdiveoff"}:
+        context.user_data["companion_active"] = False
     if base in MAIN_COMMANDS:
         await update.message.reply_text(output, reply_markup=build_main_keyboard())
     else:
@@ -299,6 +303,40 @@ async def handle_telegram(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                 )
         else:
             await update.message.reply_text(output)
+
+
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    text = update.message.text if update.message else ""
+    user = update.effective_user
+    if not text or not user:
+        return
+    if not context.user_data.get("companion_active"):
+        return
+    history = context.user_data.setdefault("history", [])
+    history.append(text)
+    try:
+        proc = await _get_user_proc(user.id)
+        await context.bot.send_chat_action(
+            chat_id=update.effective_chat.id,
+            action=ChatAction.TYPING,
+        )
+        output = await proc.run(text)
+        _append_history(user.id, text)
+    except Exception as exc:  # noqa: BLE001 - send error to user
+        await update.message.reply_text(f"Error: {exc}")
+        return
+    if not output:
+        return
+    if len(output) > 4000:
+        for i in range(0, len(output), 4000):
+            chunk = output[i : i + 4000]
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id,
+                text=f"```\n{chunk}\n```",
+                parse_mode="Markdown",
+            )
+    else:
+        await update.message.reply_text(output)
 
 
 async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -423,6 +461,9 @@ async def start_bot() -> None:
     )
     application.add_handler(run_conv)
     application.add_handler(MessageHandler(filters.ATTACHMENT, handle_file))
+    application.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)
+    )
     application.add_handler(MessageHandler(filters.COMMAND, handle_telegram))
     application.add_handler(CallbackQueryHandler(handle_callback))
     await application.initialize()
