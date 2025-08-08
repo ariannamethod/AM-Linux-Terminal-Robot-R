@@ -423,6 +423,9 @@ async def start_bot() -> None:
     )
     application.add_handler(run_conv)
     application.add_handler(MessageHandler(filters.ATTACHMENT, handle_file))
+    application.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_telegram)
+    )
     application.add_handler(MessageHandler(filters.COMMAND, handle_telegram))
     application.add_handler(CallbackQueryHandler(handle_callback))
     await application.initialize()
