@@ -130,13 +130,13 @@ The terminal, invoked after login, serves as the shell for Arianna Core.
 	•	Logs: Each session logs to /arianna_core/log/, stamped with UTC.
 	•	max_log_files option in ~/.letsgo/config to limit disk usage.
 	•	History: /arianna_core/log/history persists command history, loaded at startup, updated on exit.
-        •       Tab completion (readline): suggests built-in verbs — /xplaine, /xplainoff, /status, /time, /run, /summarize, /search, /help.
+        •       Tab completion (readline): suggests built-in verbs — /xplaine, /xplaineoff, /status, /time, /run, /summarize, /search, /help.
 	•	/status: Reports CPU cores, uptime (from /proc/uptime), and current IP.
 	•	/summarize: Searches logs (with regex), prints last five matches; --history searches command history; /search <pattern> finds all matches.
 	•	/time: Prints current UTC.
 	•	/run : Executes shell command.
         •       /xplaine: xplainer companion.
-        •       /xplainoff: xplainer off.
+        •       /xplaineoff: xplainer off.
 	•	/help: Lists verbs.
 	•	Unrecognized input: echoed back.
 	•	Structure ready for more advanced NLP (text hooks dispatch to remote models).
