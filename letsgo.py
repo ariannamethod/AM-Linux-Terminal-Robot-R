@@ -373,7 +373,7 @@ async def handle_xplaine(_: str) -> Tuple[str, str | None]:
     return reply, reply
 
 
-async def handle_xplainoff(_: str) -> Tuple[str, str | None]:
+async def handle_xplaineoff(_: str) -> Tuple[str, str | None]:
     global COMPANION_ACTIVE
     COMPANION_ACTIVE = None
     reply = "Companion off."
@@ -478,7 +478,7 @@ async def handle_help(user: str) -> Tuple[str, str | None]:
         reply = f"No help available for {cmd}"
         return reply, reply
     lines: list[str] = []
-    companion_cmds = ["/xplaine", "/xplainoff"]
+    companion_cmds = ["/xplaine", "/xplaineoff"]
     for cmd in companion_cmds:
         if cmd in COMMAND_MAP:
             _, desc = COMMAND_MAP[cmd]
@@ -518,7 +518,7 @@ async def handle_ping(_: str) -> Tuple[str, str | None]:
 
 CORE_COMMANDS: Dict[str, Tuple[Handler, str]] = {
     "/xplaine": (handle_xplaine, "xplainer companion"),
-    "/xplainoff": (handle_xplainoff, "xplainer off"),
+    "/xplaineoff": (handle_xplaineoff, "xplainer off"),
     "/status": (handle_status, "show system metrics"),
     "/cpu": (handle_cpu, "show CPU load"),
     "/disk": (handle_disk, "disk usage"),
@@ -536,7 +536,7 @@ CORE_COMMANDS: Dict[str, Tuple[Handler, str]] = {
 
 COMMAND_HELP: Dict[str, str] = {
     "/xplaine": "Usage: /xplaine\nxplainer companion about the last command.",
-    "/xplainoff": "Usage: /xplainoff\nxplainer off.",
+    "/xplaineoff": "Usage: /xplaineoff\nxplainer off.",
     "/status": "Usage: /status\nShow basic system metrics.",
     "/cpu": "Usage: /cpu\nShow CPU load averages.",
     "/disk": "Usage: /disk\nShow disk usage information.",
@@ -576,7 +576,7 @@ async def main() -> None:
     except FileNotFoundError:
         pass
 
-    companion_cmds = ["/xplaine", "/xplainoff"]
+    companion_cmds = ["/xplaine", "/xplaineoff"]
     other_cmds = sorted(cmd for cmd in COMMAND_HANDLERS if cmd not in companion_cmds)
     command_summary = " ".join(companion_cmds + other_cmds)
 
