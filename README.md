@@ -147,15 +147,15 @@ Minimal dependencies: pure Python stdlib, runs in initramfs even without extra p
 
 ## Johny
 
-Johny — это виртуальный компаньон для пользователей AMLK, постоянно подключенный к терминалу.
+Johny is a virtual companion for AMLK users, permanently connected to the terminal.
 
-Он построен на движке Sonar Pro, что обеспечивает устойчивую работу и чувствительность к контексту.
+It is built on the Sonar Pro engine, which ensures stable operation and sensitivity to context.
 
-Любая информация, проходящая через терминал, анализируется и сохраняется Джони; он запоминает данные и формирует внутреннюю память.
+All information passing through the terminal is analyzed and stored by Johny; he remembers data and develops an internal memory.
 
-При запросе Johny использует накопленные сведения, чтобы помогать решать задачи и объяснять происходящее, делая работу понятнее.
+When asked, Johny uses the accumulated knowledge to help solve tasks and explain what is happening, making work clearer.
 
-С ним можно и просто поговорить — Джони поддерживает дружеский диалог, если захочется отвлечься или обсудить идеи.
+You can also just chat with him—Johny maintains a friendly dialogue if you want to relax or discuss ideas.
 
 ⸻
 
