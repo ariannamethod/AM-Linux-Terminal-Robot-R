@@ -44,19 +44,45 @@ class SonarProDive:
         }
 
         try:
+            # Первый запрос
             response = requests.post(self.base_url, headers=headers, json=payload)
             response.raise_for_status()
             result = response.json()
             answer = result["choices"][0]["message"]["content"]
+            finish_reason = result["choices"][0].get("finish_reason", "")
+
+            # Если модель обрезала ответ по длине — запрос на завершение
+            if finish_reason == "length":
+                follow_payload = {
+                    "model": "sonar-pro",
+                    "messages": [
+                        {"role": "system", "content": self.system_prompt},
+                        {"role": "assistant", "content": answer},
+                        {"role": "user", "content": "Please finish your last answer, continuing naturally and ending cleanly."}
+                    ],
+                    "temperature": 0.35,
+                    "max_tokens": 400
+                }
+                follow_resp = requests.post(self.base_url, headers=headers, json=follow_payload)
+                follow_resp.raise_for_status()
+                cont = follow_resp.json()["choices"][0]["message"]["content"]
+                answer = (answer + " " + cont).strip()
+
+            # Очистка, обрезка и переименование
             answer = self._remove_links(answer)
             answer = self._trim_answer(answer)
             answer = re.sub(r"(Sonar[\s\-]?Pro|Sonar Reasoning Pro|Tony)", "Johny", answer, flags=re.IGNORECASE)
 
-            # Если ответ обрывается не на . или ! или ? — добавь "... (ответ был усечён, попробуйте уточнить вопрос)"
+            # Если нет финальной точки/!/? — аккуратно закрываем
             if not answer.rstrip().endswith(('.', '!', '?')):
-                answer = answer.rstrip('.') + "… (ответ был усечён, попробуйте уточнить вопрос)"
+                if '.' in answer:
+                    answer = answer.rsplit('.', 1)[0] + "."
+                else:
+                    answer += "… (усечено)"
+                    
             memory.log("johny", answer)
             return f"🔍 Johny:\n{answer}"
+
         except Exception as e:
             err = f"❌ Johny Error: {str(e)}"
             memory.log("johny", err)
