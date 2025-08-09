@@ -354,19 +354,26 @@ def search_history(pattern: str) -> str:
     return "\n".join(matches) if matches else "no matches"
 
 
-async def handle_dive(_: str) -> Tuple[str, str | None]:
+async def handle_xplaine(_: str) -> Tuple[str, str | None]:
     global COMPANION_ACTIVE
     COMPANION_ACTIVE = "johny"
     last = memory.last_real_command()
+    is_russian = bool(re.search(r"[А-Яа-яЁё]", last))
     if last:
-        prompt = f"The user tried to '{last}' and had problems. Explain."
+        if is_russian:
+            prompt = f"Пользователь пытался выполнить '{last}' и столкнулся с проблемами. Объясни."
+        else:
+            prompt = f"The user tried to '{last}' and had problems. Explain."
         reply = await asyncio.to_thread(JOHNY.query, prompt)
     else:
-        reply = "эй, я Джонни! проблемы? нужна помощь?"
+        if is_russian:
+            reply = "эй, я Джонни! проблемы? нужна помощь?"
+        else:
+            reply = "Hey there! I'm Johny. Need help?"
     return reply, reply
 
 
-async def handle_diveoff(_: str) -> Tuple[str, str | None]:
+async def handle_xplainoff(_: str) -> Tuple[str, str | None]:
     global COMPANION_ACTIVE
     COMPANION_ACTIVE = None
     reply = "Companion off."
@@ -471,7 +478,7 @@ async def handle_help(user: str) -> Tuple[str, str | None]:
         reply = f"No help available for {cmd}"
         return reply, reply
     lines: list[str] = []
-    companion_cmds = ["/dive", "/diveoff"]
+    companion_cmds = ["/xplaine", "/xplainoff"]
     for cmd in companion_cmds:
         if cmd in COMMAND_MAP:
             _, desc = COMMAND_MAP[cmd]
@@ -510,8 +517,8 @@ async def handle_ping(_: str) -> Tuple[str, str | None]:
 
 
 CORE_COMMANDS: Dict[str, Tuple[Handler, str]] = {
-    "/dive": (handle_dive, "xplainer companion"),
-    "/diveoff": (handle_diveoff, "xplainer off"),
+    "/xplaine": (handle_xplaine, "xplainer companion"),
+    "/xplainoff": (handle_xplainoff, "xplainer off"),
     "/status": (handle_status, "show system metrics"),
     "/cpu": (handle_cpu, "show CPU load"),
     "/disk": (handle_disk, "disk usage"),
@@ -528,8 +535,8 @@ CORE_COMMANDS: Dict[str, Tuple[Handler, str]] = {
 }
 
 COMMAND_HELP: Dict[str, str] = {
-    "/dive": "Usage: /dive\nxplainer companion about the last command.",
-    "/diveoff": "Usage: /diveoff\nxplainer off.",
+    "/xplaine": "Usage: /xplaine\nxplainer companion about the last command.",
+    "/xplainoff": "Usage: /xplainoff\nxplainer off.",
     "/status": "Usage: /status\nShow basic system metrics.",
     "/cpu": "Usage: /cpu\nShow CPU load averages.",
     "/disk": "Usage: /disk\nShow disk usage information.",
@@ -569,7 +576,7 @@ async def main() -> None:
     except FileNotFoundError:
         pass
 
-    companion_cmds = ["/dive", "/diveoff"]
+    companion_cmds = ["/xplaine", "/xplainoff"]
     other_cmds = sorted(cmd for cmd in COMMAND_HANDLERS if cmd not in companion_cmds)
     command_summary = " ".join(companion_cmds + other_cmds)
 

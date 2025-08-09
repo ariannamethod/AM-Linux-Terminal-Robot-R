@@ -155,19 +155,19 @@ def test_companion_commands(monkeypatch):
     handlers = {}
     letsgo.COMMAND_MAP.clear()
     letsgo.register_core(commands, handlers)
-    assert "/dive" in commands
-    assert "/diveoff" in commands
+    assert "/xplaine" in commands
+    assert "/xplainoff" in commands
     assert "/deepdive" not in commands
     assert "/deepdiveoff" not in commands
     monkeypatch.setattr(letsgo.memory, "last_real_command", lambda: "ls")
     monkeypatch.setattr(letsgo.JOHNY, "query", lambda msg: "ok")
-    asyncio.run(handlers["/dive"]("/dive"))
+    asyncio.run(handlers["/xplaine"]("/xplaine"))
     assert letsgo.COMPANION_ACTIVE == "johny"
-    asyncio.run(handlers["/diveoff"]("/diveoff"))
+    asyncio.run(handlers["/xplainoff"]("/xplainoff"))
     assert letsgo.COMPANION_ACTIVE is None
 
 
-def test_dive_without_prior_command(monkeypatch):
+def test_xplaine_without_prior_command(monkeypatch):
     commands = []
     handlers = {}
     letsgo.COMMAND_MAP.clear()
@@ -178,8 +178,8 @@ def test_dive_without_prior_command(monkeypatch):
         raise AssertionError("query should not be called")
 
     monkeypatch.setattr(letsgo.JOHNY, "query", fake_query)
-    reply, _ = asyncio.run(handlers["/dive"]("/dive"))
-    assert reply == "эй, я Джонни! проблемы? нужна помощь?"
+    reply, _ = asyncio.run(handlers["/xplaine"]("/xplaine"))
+    assert reply == "Hey there! I'm Johny. Need help?"
 
 
 def test_help_lists_command_descriptions():
@@ -188,7 +188,7 @@ def test_help_lists_command_descriptions():
     letsgo.COMMAND_MAP.clear()
     letsgo.register_core(commands, handlers)
     output, _ = asyncio.run(letsgo.handle_help("/help"))
-    assert "/dive" in output
+    assert "/xplaine" in output
     assert "xplainer companion" in output
     assert "/clear" in output
     assert "clear the terminal" in output
