@@ -3,12 +3,13 @@ import requests
 import re
 from . import memory
 
+
 class SonarProDive:
     def __init__(self):
         self.api_key = (
-            os.getenv("PERPLEXITY_API_KEY") or
-            os.getenv("PERPLEXITY_API") or
-            os.getenv("PPLX_API_KEY")
+            os.getenv("PERPLEXITY_API_KEY")
+            or os.getenv("PERPLEXITY_API")
+            or os.getenv("PPLX_API_KEY")
         )
         self.base_url = "https://api.perplexity.ai/chat/completions"
         self.system_prompt = (
@@ -58,12 +59,17 @@ class SonarProDive:
                     "messages": [
                         {"role": "system", "content": self.system_prompt},
                         {"role": "assistant", "content": answer},
-                        {"role": "user", "content": "Please finish your last answer, continuing naturally and ending cleanly."}
+                        {
+                            "role": "user",
+                            "content": "Please finish your last answer, continuing naturally and ending cleanly.",
+                        },
                     ],
                     "temperature": 0.35,
-                    "max_tokens": 400
+                    "max_tokens": 400,
                 }
-                follow_resp = requests.post(self.base_url, headers=headers, json=follow_payload)
+                follow_resp = requests.post(
+                    self.base_url, headers=headers, json=follow_payload
+                )
                 follow_resp.raise_for_status()
                 cont = follow_resp.json()["choices"][0]["message"]["content"]
                 answer = (answer + " " + cont).strip()
@@ -71,15 +77,20 @@ class SonarProDive:
             # Очистка, обрезка и переименование
             answer = self._remove_links(answer)
             answer = self._trim_answer(answer)
-            answer = re.sub(r"(Sonar[\s\-]?Pro|Sonar Reasoning Pro|Tony)", "Johny", answer, flags=re.IGNORECASE)
+            answer = re.sub(
+                r"(Sonar[\s\-]?Pro|Sonar Reasoning Pro|Tony)",
+                "Johny",
+                answer,
+                flags=re.IGNORECASE,
+            )
 
             # Если нет финальной точки/!/? — аккуратно закрываем
-            if not answer.rstrip().endswith(('.', '!', '?')):
-                if '.' in answer:
-                    answer = answer.rsplit('.', 1)[0] + "."
+            if not answer.rstrip().endswith((".", "!", "?")):
+                if "." in answer:
+                    answer = answer.rsplit(".", 1)[0] + "."
                 else:
                     answer += "… (усечено)"
-                    
+
             memory.log("johny", answer)
             return f"🔍 Johny:\n{answer}"
 

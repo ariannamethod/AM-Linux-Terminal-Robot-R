@@ -286,9 +286,9 @@ async def handle_telegram(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if not output:
         return
     base = cmd.split()[0]
-    if base in {"/dive", "/deepdive"}:
+    if base == "/dive":
         context.user_data["companion_active"] = True
-    elif base in {"/diveoff", "/deepdiveoff"}:
+    elif base == "/diveoff":
         context.user_data["companion_active"] = False
     if base in MAIN_COMMANDS:
         await update.message.reply_text(output, reply_markup=build_main_keyboard())
