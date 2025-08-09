@@ -156,20 +156,30 @@ def test_companion_commands(monkeypatch):
     letsgo.COMMAND_MAP.clear()
     letsgo.register_core(commands, handlers)
     assert "/dive" in commands
-    assert "/deepdive" in commands
     assert "/diveoff" in commands
-    assert "/deepdiveoff" in commands
-    monkeypatch.setattr(letsgo.memory, "last_user_command", lambda: "ls")
+    assert "/deepdive" not in commands
+    assert "/deepdiveoff" not in commands
+    monkeypatch.setattr(letsgo.memory, "last_real_command", lambda: "ls")
     monkeypatch.setattr(letsgo.JOHNY, "query", lambda msg: "ok")
-    monkeypatch.setattr(letsgo.TONY, "query", lambda msg: "deep")
     asyncio.run(handlers["/dive"]("/dive"))
     assert letsgo.COMPANION_ACTIVE == "johny"
     asyncio.run(handlers["/diveoff"]("/diveoff"))
     assert letsgo.COMPANION_ACTIVE is None
-    asyncio.run(handlers["/deepdive"]("/deepdive"))
-    assert letsgo.COMPANION_ACTIVE == "tony"
-    asyncio.run(handlers["/deepdiveoff"]("/deepdiveoff"))
-    assert letsgo.COMPANION_ACTIVE is None
+
+
+def test_dive_without_prior_command(monkeypatch):
+    commands = []
+    handlers = {}
+    letsgo.COMMAND_MAP.clear()
+    letsgo.register_core(commands, handlers)
+    monkeypatch.setattr(letsgo.memory, "last_real_command", lambda: "")
+
+    def fake_query(_: str) -> str:  # pragma: no cover
+        raise AssertionError("query should not be called")
+
+    monkeypatch.setattr(letsgo.JOHNY, "query", fake_query)
+    reply, _ = asyncio.run(handlers["/dive"]("/dive"))
+    assert reply == "эй, я Джонни! проблемы? нужна помощь?"
 
 
 def test_help_lists_command_descriptions():
@@ -179,7 +189,7 @@ def test_help_lists_command_descriptions():
     letsgo.register_core(commands, handlers)
     output, _ = asyncio.run(letsgo.handle_help("/help"))
     assert "/dive" in output
-    assert "ask companion" in output
+    assert "xplainer companion" in output
     assert "/clear" in output
     assert "clear the terminal" in output
     assert "/history" in output

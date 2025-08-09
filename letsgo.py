@@ -26,7 +26,6 @@ from dataclasses import dataclass, asdict
 import re
 import shutil
 from spirits.johny import SonarProDive
-from spirits.tony import SonarReasoningDive
 from spirits import memory
 
 _NO_COLOR_FLAG = "--no-color"
@@ -125,7 +124,6 @@ ERROR_LOG_PATH = LOG_DIR / "errors.log"
 Handler = Callable[[str], Awaitable[Tuple[str, str | None]]]
 
 JOHNY = SonarProDive()
-TONY = SonarReasoningDive()
 COMPANION_ACTIVE: str | None = None
 
 
@@ -359,32 +357,18 @@ def search_history(pattern: str) -> str:
 async def handle_dive(_: str) -> Tuple[str, str | None]:
     global COMPANION_ACTIVE
     COMPANION_ACTIVE = "johny"
-    last = memory.last_user_command()
-    prompt = f"The user tried to '{last}' and had problems. Explain."
-    reply = await asyncio.to_thread(JOHNY.query, prompt)
-    return reply, reply
-
-
-async def handle_deepdive(_: str) -> Tuple[str, str | None]:
-    global COMPANION_ACTIVE
-    COMPANION_ACTIVE = "tony"
-    last = memory.last_user_command()
-    prompt = f"The user tried to '{last}' and needs a deep explanation."
-    reply = await asyncio.to_thread(TONY.query, prompt)
+    last = memory.last_real_command()
+    if last:
+        prompt = f"The user tried to '{last}' and had problems. Explain."
+        reply = await asyncio.to_thread(JOHNY.query, prompt)
+    else:
+        reply = "эй, я Джонни! проблемы? нужна помощь?"
     return reply, reply
 
 
 async def handle_diveoff(_: str) -> Tuple[str, str | None]:
     global COMPANION_ACTIVE
     COMPANION_ACTIVE = None
-    reply = "Companion off."
-    return reply, reply
-
-
-async def handle_deepdiveoff(_: str) -> Tuple[str, str | None]:
-    global COMPANION_ACTIVE
-    if COMPANION_ACTIVE == "tony":
-        COMPANION_ACTIVE = None
     reply = "Companion off."
     return reply, reply
 
@@ -487,7 +471,7 @@ async def handle_help(user: str) -> Tuple[str, str | None]:
         reply = f"No help available for {cmd}"
         return reply, reply
     lines: list[str] = []
-    companion_cmds = ["/dive", "/diveoff", "/deepdive", "/deepdiveoff"]
+    companion_cmds = ["/dive", "/diveoff"]
     for cmd in companion_cmds:
         if cmd in COMMAND_MAP:
             _, desc = COMMAND_MAP[cmd]
@@ -526,10 +510,8 @@ async def handle_ping(_: str) -> Tuple[str, str | None]:
 
 
 CORE_COMMANDS: Dict[str, Tuple[Handler, str]] = {
-    "/dive": (handle_dive, "ask companion"),
-    "/diveoff": (handle_diveoff, "companion off"),
-    "/deepdive": (handle_deepdive, "deep xplainer companion"),
-    "/deepdiveoff": (handle_deepdiveoff, "companion off"),
+    "/dive": (handle_dive, "xplainer companion"),
+    "/diveoff": (handle_diveoff, "xplainer off"),
     "/status": (handle_status, "show system metrics"),
     "/cpu": (handle_cpu, "show CPU load"),
     "/disk": (handle_disk, "disk usage"),
@@ -546,10 +528,8 @@ CORE_COMMANDS: Dict[str, Tuple[Handler, str]] = {
 }
 
 COMMAND_HELP: Dict[str, str] = {
-    "/dive": "Usage: /dive\nAsk companion about the last command.",
-    "/diveoff": "Usage: /diveoff\nCompanion off.",
-    "/deepdive": "Usage: /deepdive\nDeep xplainer companion about the last command.",
-    "/deepdiveoff": "Usage: /deepdiveoff\nCompanion off.",
+    "/dive": "Usage: /dive\nxplainer companion about the last command.",
+    "/diveoff": "Usage: /diveoff\nxplainer off.",
     "/status": "Usage: /status\nShow basic system metrics.",
     "/cpu": "Usage: /cpu\nShow CPU load averages.",
     "/disk": "Usage: /disk\nShow disk usage information.",
@@ -589,7 +569,7 @@ async def main() -> None:
     except FileNotFoundError:
         pass
 
-    companion_cmds = ["/dive", "/diveoff", "/deepdive", "/deepdiveoff"]
+    companion_cmds = ["/dive", "/diveoff"]
     other_cmds = sorted(cmd for cmd in COMMAND_HANDLERS if cmd not in companion_cmds)
     command_summary = " ".join(companion_cmds + other_cmds)
 
@@ -637,10 +617,7 @@ async def main() -> None:
         memory.log("user", user)
         log(f"user:{user}")
         if not user.startswith("/") and COMPANION_ACTIVE:
-            if COMPANION_ACTIVE == "johny":
-                reply = await asyncio.to_thread(JOHNY.query, user)
-            else:
-                reply = await asyncio.to_thread(TONY.query, user)
+            reply = await asyncio.to_thread(JOHNY.query, user)
             print(reply)
             memory.log("reply", reply)
             log(f"{COMPANION_ACTIVE}:{reply}")

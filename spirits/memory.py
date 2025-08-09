@@ -30,4 +30,19 @@ def last_user_command() -> str:
     return row[0] if row else ""
 
 
+def last_real_command() -> str:
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute(
+        """
+        SELECT content FROM events
+        WHERE role='user' AND content NOT LIKE '/%'
+        ORDER BY ts DESC LIMIT 1
+        """
+    )
+    row = cur.fetchone()
+    conn.close()
+    return row[0] if row else ""
+
+
 _init_db()
