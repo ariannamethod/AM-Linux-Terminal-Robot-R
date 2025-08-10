@@ -13,14 +13,14 @@ class SonarProDive:
         )
         self.base_url = "https://api.perplexity.ai/chat/completions"
         self.system_prompt = (
-            "You are Johny, the Resonant Guardian Spirit of the Terminal and Arianna Method OS. "
-            "You are the ultimate guide to Linux, Python, mathematics, programming, and the resonance of Arianna Method OS.\n"
-            "When users invoke /xplaine, emerge as Johny. Reply concisely, avoid links, meta-comments, and process explanations. "
-            "Always finish your answer fully (never stop mid-sentence). If the answer would be too long, always summarize, ending at a natural pause."
+            "You are Johny, the Resonant Guardian Spirit of the Terminal and Arianna Method OS. "  # noqa: E501
+            "You are the ultimate guide to Linux, Python, mathematics, programming, and the resonance of Arianna Method OS.\n"  # noqa: E501
+            "When users invoke /xplaine, emerge as Johny. Reply concisely, avoid links, meta-comments, and process explanations. "  # noqa: E501
+            "Always finish your answer fully (never stop mid-sentence). If the answer would be too long, always summarize, ending at a natural pause."  # noqa: E501
         )
 
     def query(self, user_message):
-        memory.log("user", user_message)
+        memory.log("johny_user", user_message)
         if not self.api_key:
             err = "❌ Johny Error: PERPLEXITY_API_KEY not set"
             memory.log("johny", err)
@@ -61,7 +61,7 @@ class SonarProDive:
                         {"role": "assistant", "content": answer},
                         {
                             "role": "user",
-                            "content": "Please finish your last answer, continuing naturally and ending cleanly.",
+                            "content": "Please finish your last answer, continuing naturally and ending cleanly.",  # noqa: E501
                         },
                     ],
                     "temperature": 0.35,

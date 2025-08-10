@@ -361,7 +361,7 @@ async def handle_xplaine(_: str) -> Tuple[str, str | None]:
     is_russian = bool(re.search(r"[А-Яа-яЁё]", last))
     if last:
         if is_russian:
-            prompt = f"Пользователь пытался выполнить '{last}' и столкнулся с проблемами. Объясни."
+            prompt = f"Пользователь пытался выполнить '{last}' и столкнулся с проблемами. Объясни."  # noqa: E501
         else:
             prompt = f"The user tried to '{last}' and had problems. Explain."
         reply = await asyncio.to_thread(JOHNY.query, prompt)
@@ -621,14 +621,15 @@ async def main() -> None:
             break
         if user.strip().lower() in {"exit", "quit"}:
             break
-        memory.log("user", user)
-        log(f"user:{user}")
         if not user.startswith("/") and COMPANION_ACTIVE:
+            log(f"user:{user}")
             reply = await asyncio.to_thread(JOHNY.query, user)
             print(reply)
             memory.log("reply", reply)
             log(f"{COMPANION_ACTIVE}:{reply}")
             continue
+        memory.log("user", user)
+        log(f"user:{user}")
         base = user.split()[0]
         handler = COMMAND_HANDLERS.get(base)
         if handler:
