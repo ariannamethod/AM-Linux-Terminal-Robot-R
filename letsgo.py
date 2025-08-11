@@ -471,7 +471,7 @@ async def handle_history(user: str) -> Tuple[str, str | None]:
 async def handle_help(user: str) -> Tuple[str, str | None]:
     parts = user.split(maxsplit=1)
     if len(parts) > 1:
-        cmd = parts[1]
+        cmd = parts[1].split()[0]
         help_text = COMMAND_HELP.get(cmd)
         if help_text:
             return help_text, help_text

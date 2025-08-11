@@ -205,6 +205,15 @@ def test_help_specific_command():
     assert "Usage: /time" in output
 
 
+def test_help_ignores_extra_args():
+    commands = []
+    handlers = {}
+    letsgo.COMMAND_MAP.clear()
+    letsgo.register_core(commands, handlers)
+    output, _ = asyncio.run(letsgo.handle_help("/help /time extra"))
+    assert "Usage: /time" in output
+
+
 def test_help_unknown_command():
     output, _ = asyncio.run(letsgo.handle_help("/help /missing"))
     assert "No help available for /missing" in output
