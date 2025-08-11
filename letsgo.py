@@ -470,13 +470,6 @@ async def handle_history(user: str) -> Tuple[str, str | None]:
 
 async def handle_help(user: str) -> Tuple[str, str | None]:
     parts = user.split(maxsplit=1)
-    if len(parts) > 1:
-        cmd = parts[1].split()[0]
-        help_text = COMMAND_HELP.get(cmd)
-        if help_text:
-            return help_text, help_text
-        reply = f"No help available for {cmd}"
-        return reply, reply
     lines: list[str] = []
     companion_cmds = ["/xplaine", "/xplaineoff"]
     for cmd in companion_cmds:
@@ -486,6 +479,15 @@ async def handle_help(user: str) -> Tuple[str, str | None]:
     for cmd, (_, desc) in sorted(COMMAND_MAP.items()):
         if cmd not in companion_cmds:
             lines.append(f"{cmd} - {desc}")
+    if len(parts) > 1:
+        cmd = parts[1].split()[0]
+        help_text = COMMAND_HELP.get(cmd)
+        if help_text:
+            lines.append("")
+            lines.append(help_text)
+        else:
+            lines.append("")
+            lines.append(f"No help available for {cmd}")
     reply = "\n".join(lines)
     return reply, reply
 
