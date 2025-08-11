@@ -468,27 +468,15 @@ async def handle_history(user: str) -> Tuple[str, str | None]:
     return reply, reply
 
 
-async def handle_help(user: str) -> Tuple[str, str | None]:
-    parts = user.split(maxsplit=1)
-    lines: list[str] = []
-    companion_cmds = ["/xplaine", "/xplaineoff"]
-    for cmd in companion_cmds:
-        if cmd in COMMAND_MAP:
-            _, desc = COMMAND_MAP[cmd]
-            lines.append(f"{cmd} - {desc}")
-    for cmd, (_, desc) in sorted(COMMAND_MAP.items()):
-        if cmd not in companion_cmds:
-            lines.append(f"{cmd} - {desc}")
-    if len(parts) > 1:
-        cmd = parts[1].split()[0]
-        help_text = COMMAND_HELP.get(cmd)
-        if help_text:
-            lines.append("")
-            lines.append(help_text)
-        else:
-            lines.append("")
-            lines.append(f"No help available for {cmd}")
-    reply = "\n".join(lines)
+def build_help_message() -> str:
+    commands = "\n".join(
+        f"{cmd} - {desc}" for cmd, (_, desc) in CORE_COMMANDS.items()
+    )
+    return "Welcome! Available commands:\n" + commands
+
+
+async def handle_help(_: str) -> Tuple[str, str | None]:
+    reply = build_help_message()
     return reply, reply
 
 
@@ -536,26 +524,6 @@ CORE_COMMANDS: Dict[str, Tuple[Handler, str]] = {
     "/ping": (handle_ping, "reply with pong"),
 }
 
-COMMAND_HELP: Dict[str, str] = {
-    "/xplaine": "Usage: /xplaine\nxplainer companion about the last command.",
-    "/xplaineoff": "Usage: /xplaineoff\nxplainer off.",
-    "/status": "Usage: /status\nShow basic system metrics.",
-    "/cpu": "Usage: /cpu\nShow CPU load averages.",
-    "/disk": "Usage: /disk\nShow disk usage information.",
-    "/net": "Usage: /net\nShow network parameters.",
-    "/time": "Usage: /time\nDisplay the current UTC time.",
-    "/run": "Usage: /run <command>\nRun a shell command and return its output.",
-    "/py": "Usage: /py <code>\nExecute Python code and print the result.",
-    "/summarize": (
-        "Usage: /summarize [--history] [limit]"
-        "\nSummarize recent log entries or command history."
-    ),
-    "/clear": "Usage: /clear\nClear the terminal.",
-    "/history": "Usage: /history [n]\nShow the last n commands.",
-    "/help": "Usage: /help [command]\nList commands or show detailed help.",
-    "/search": "Usage: /search <pattern>\nSearch the command history.",
-    "/ping": "Usage: /ping\nReply with pong.",
-}
 
 COMMAND_HANDLERS: Dict[str, Handler] = {
     cmd: func for cmd, (func, _) in CORE_COMMANDS.items()
