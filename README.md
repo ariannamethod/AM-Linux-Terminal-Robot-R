@@ -151,6 +151,8 @@ Johny is a virtual companion for AMLK users, permanently connected to the termin
 
 It is built on the Sonar Pro engine, which ensures stable operation and sensitivity to context.
 
+Sonar Pro is developed by Perplexity, providing Johny with the platform's advanced context-aware reasoning.
+
 All information passing through the terminal is analyzed and stored by Johny; he remembers data and develops an internal memory.
 
 When asked, Johny uses the accumulated knowledge to help solve tasks and explain what is happening, making work clearer.
