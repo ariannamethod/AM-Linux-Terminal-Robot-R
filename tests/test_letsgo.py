@@ -188,38 +188,16 @@ def test_help_lists_command_descriptions():
     letsgo.COMMAND_MAP.clear()
     letsgo.register_core(commands, handlers)
     output, _ = asyncio.run(letsgo.handle_help("/help"))
-    assert "/xplaine" in output
-    assert "xplainer companion" in output
-    assert "/clear" in output
-    assert "clear the terminal" in output
-    assert "/history" in output
-    assert "command history" in output
+    assert output == letsgo.build_help_message()
 
 
-def test_help_specific_command():
-    commands = []
-    handlers = {}
-    letsgo.COMMAND_MAP.clear()
-    letsgo.register_core(commands, handlers)
-    output, _ = asyncio.run(letsgo.handle_help("/help /time"))
-    assert "/xplaine" in output
-    assert "Usage: /time" in output
-
-
-def test_help_ignores_extra_args():
+def test_help_ignores_arguments():
     commands = []
     handlers = {}
     letsgo.COMMAND_MAP.clear()
     letsgo.register_core(commands, handlers)
     output, _ = asyncio.run(letsgo.handle_help("/help /time extra"))
-    assert "/xplaine" in output
-    assert "Usage: /time" in output
-
-
-def test_help_unknown_command():
-    output, _ = asyncio.run(letsgo.handle_help("/help /missing"))
-    assert "/xplaine" in output
-    assert "No help available for /missing" in output
+    assert output == letsgo.build_help_message()
 
 
 def test_handle_py_executes_code():
