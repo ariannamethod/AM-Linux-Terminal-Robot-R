@@ -157,6 +157,14 @@ When asked, Johny uses the accumulated knowledge to help solve tasks and explain
 
 You can also just chat with him—Johny maintains a friendly dialogue if you want to relax or discuss ideas.
 
+Behind the scenes, Johny intercepts every command and its result, building a timeline that mirrors your session.
+
+He parses each line looking for dependencies or follow-up steps, tagging items in memory so they can be recalled or cross-referenced later.
+
+When you request guidance, Johny replays the timeline, evaluates potential next actions, and proposes safe sequences that match the current context.
+
+If Johny cannot infer a path locally, he delegates the question to external models via the Sonar Pro engine, merges the returned insights into his memory, and explains the rationale before you proceed.
+
 ⸻
 
 Architecture
