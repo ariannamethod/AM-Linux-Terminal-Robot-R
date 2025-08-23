@@ -9,6 +9,7 @@ import sys
 import readline
 import atexit
 import asyncio
+import ast
 import importlib.metadata as importlib_metadata
 from datetime import datetime
 from pathlib import Path
@@ -25,6 +26,11 @@ from typing import (
 from dataclasses import dataclass, asdict
 import re
 import shutil
+
+try:
+    import black
+except Exception:  # pragma: no cover - fallback when black is absent
+    black = None
 from spirits.johny import SonarProDive
 from spirits import memory
 
@@ -275,6 +281,39 @@ async def run_command(
         return str(exc), 1, duration
 
 
+PYTHON_KEYWORDS = (
+    "import ",
+    "def ",
+    "for ",
+    "while ",
+    "class ",
+    "if ",
+    "print(",
+    "=",
+)
+
+
+def format_python(code: str) -> str:
+    """Format Python ``code`` using ``black`` if available."""
+    if black is None:
+        return code
+    try:
+        return black.format_str(code, mode=black.FileMode())
+    except Exception:
+        return code
+
+
+def looks_like_python(text: str) -> bool:
+    """Heuristically determine whether ``text`` is Python code."""
+    if "\n" not in text and not any(kw in text for kw in PYTHON_KEYWORDS):
+        return False
+    try:
+        ast.parse(text)
+    except SyntaxError:
+        return False
+    return True
+
+
 def clear_screen() -> str:
     """Return the control sequence that clears the terminal."""
     return "\033c"
@@ -429,6 +468,7 @@ async def handle_py(user: str) -> Tuple[str, str | None]:
     if not code:
         reply = "Usage: /py <code>"
         return reply, reply
+    code = format_python(code)
     try:
         proc = await asyncio.create_subprocess_exec(
             sys.executable,
@@ -469,9 +509,7 @@ async def handle_history(user: str) -> Tuple[str, str | None]:
 
 
 def build_help_message() -> str:
-    commands = "\n".join(
-        f"{cmd} - {desc}" for cmd, (_, desc) in CORE_COMMANDS.items()
-    )
+    commands = "\n".join(f"{cmd} - {desc}" for cmd, (_, desc) in CORE_COMMANDS.items())
     return "Welcome! Available commands:\n" + commands
 
 
@@ -591,12 +629,26 @@ async def main() -> None:
             break
         if user.strip().lower() in {"exit", "quit"}:
             break
-        if not user.startswith("/") and COMPANION_ACTIVE:
-            log(f"user:{user}")
-            reply = await asyncio.to_thread(JOHNY.query, user)
-            print(reply)
+        if not user.startswith("/"):
+            if looks_like_python(user):
+                memory.log("user", user)
+                log(f"user:{user}")
+                reply, colored = await handle_py(f"/py {user}")
+            elif COMPANION_ACTIVE:
+                log(f"user:{user}")
+                reply = await asyncio.to_thread(JOHNY.query, user)
+                print(reply)
+                memory.log("reply", reply)
+                log(f"{COMPANION_ACTIVE}:{reply}")
+                continue
+            else:
+                memory.log("user", user)
+                log(f"user:{user}")
+                reply, colored = await handle_run(f"/run {user}")
+            if colored is not None:
+                print(colored)
             memory.log("reply", reply)
-            log(f"{COMPANION_ACTIVE}:{reply}")
+            log(f"letsgo:{reply}")
             continue
         memory.log("user", user)
         log(f"user:{user}")
