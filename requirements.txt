@@ -1,6 +1,6 @@
 black
 fastapi
 uvicorn[standard]
-python - telegram - bot
-python - multipart
+python-telegram-bot
+python-multipart
 requests
